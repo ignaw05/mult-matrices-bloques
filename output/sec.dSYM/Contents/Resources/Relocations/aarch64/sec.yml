@@ -1,0 +1,8 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/ignaciowuilloud/Desktop/Facultad/3ero/ComputacionParalela/integrador/output/sec'
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _imprimirMatriz, symObjAddr: 0x0, symBinAddr: 0x1000037C0, symSize: 0xFC }
+  - { offsetInCU: 0x54, offset: 0x54, size: 0x8, addend: 0x0, symName: _imprimirMatriz, symObjAddr: 0x0, symBinAddr: 0x1000037C0, symSize: 0xFC }
+  - { offsetInCU: 0xCC, offset: 0xCC, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0xFC, symBinAddr: 0x1000038BC, symSize: 0x61C }
+...

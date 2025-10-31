@@ -2,6 +2,7 @@
 #include <stdlib.h> // Necesario para malloc y free
 #include <string.h> // Necesario para memcpy
 #include <math.h>   // Necesario para sqrt
+#include <sys/time.h> 
 
 // 1. Definiciones de Dimensiones (constantes)
 #define M_FILAS_A 16
@@ -15,7 +16,6 @@
 // La matriz de impresión ahora debe aceptar un puntero a arreglo
 // para manejar el resultado C y las submatrices dinámicas.
 void imprimirMatriz(int rows, int cols, int mat[rows][cols]) {
-    printf("Imprimiendo matriz %dx%d:\n", rows, cols);
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             printf("%d\t", mat[i][j]);
@@ -25,6 +25,11 @@ void imprimirMatriz(int rows, int cols, int mat[rows][cols]) {
 }
 
 int main() {
+
+    struct timeval inicio, fin;
+    double tiempo;
+    gettimeofday(&inicio, NULL); // ⏱️ Comienza medición
+
     // Dimensiones
     int M = M_FILAS_A;
     int K = K_COMUN;
@@ -46,8 +51,14 @@ int main() {
     // El vector ahora contendrá punteros a bloques de memoria dinámicos.
     // int (*vector[n2])[columnB];  // Vector de punteros a arreglos de 'columnB' int's
     // Nota: Como 'matriz' será de 'filaMatriz x columnB', es más seguro usar un puntero genérico.
-    int **vector = malloc(n * sizeof(int*)); // Arreglo de n2 punteros a int
-    if (vector == NULL) return 1;
+
+    // VECTOR A FILAS DE A
+    // VECTOR B COLUMNAS DE B
+    int **vectorA = malloc(n * sizeof(int*)); // Arreglo de n2 punteros a int
+    if (vectorA == NULL) return 1;
+
+    int **vectorB = malloc(n * sizeof(int*)); // Arreglo de n2 punteros a int
+    if (vectorB == NULL) return 1;
 
     // ----------------------------------------------------
     // 3. Inicialización de Matrices Estáticas
@@ -56,7 +67,7 @@ int main() {
     int matrizA[M][K];
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < K; j++) {
-            matrizA[i][j] = 10;
+            matrizA[i][j] = 1;
         }
     }
 
@@ -64,79 +75,83 @@ int main() {
     int matrizB[K][N];
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < N; j++) {
-            matrizB[i][j] = 2;
+            matrizB[i][j] = 5;
         }
     }
     
     // Matriz C (16x16)
-    int matrizC[M][N];
+    int matrizC[filasA][columnB]; 
 
     // ----------------------------------------------------
     // 4. División de Matriz A (Usando Malloc y Memcpy)
 
-    int filaMatriz = filasA / n2; // 16 / 2 = 8 filas por submatriz
+    int filaMatrizA = filasA / n2; // 16 / 2 = 8 filas por submatriz
     int I_inicio = 0;
     
-    printf("Dividiendo matrizA (%dx%d) en %d bloques de %dx%d...\n", M, K, n2, filaMatriz, columnA);
 
     for (int J = 0; J < n2; J++){ // Bucle para las 2 particiones (J=0, J=1)
 
-        vector[J] = (int *)malloc(filaMatriz * columnA * sizeof(int));
-        if (vector[J] == NULL) return 1;
+        vectorA[J] = (int *)malloc(filaMatrizA * columnA * sizeof(int));
+        if (vectorA[J] == NULL) return 1;
         
         // Copia de los datos desde matrizA al bloque dinámico vector[J]
         // &matrizA[I_inicio][0] es la dirección del primer elemento de la submatriz.
-        memcpy(vector[J], 
+        memcpy(vectorA[J], 
                &matrizA[I_inicio][0], 
-               filaMatriz * columnA * sizeof(int));
+               filaMatrizA * columnA * sizeof(int));
 
         // Actualización del índice de inicio para la siguiente partición
-        I_inicio += filaMatriz;
+        I_inicio += filaMatrizA;
     }
 
-    int filaMatrizB = columnB / n2; // 16 / 2 = 8 filas por submatriz
-    int I_inicioB = 0;
+    int columnaMatrizB = columnB / n2; // 16 / 2 = 8 filas por submatriz
+    int I_inicio_columna = 0;
     
-    printf("Dividiendo matriz (%dx%d) en %d bloques de %dx%d...\n", M, K, n2, filaMatriz, columnA);
+    for (int K = 0; K < n2; K++){ // Bucle para las 2 particiones (J=0, J=1)
 
-    for (int J = 0; J < n2; J++){ // Bucle para las 2 particiones (J=0, J=1)
-
-        vector[J] = (int *)malloc(filaMatrizB * filasB * sizeof(int));
-        if (vector[J] == NULL) return 1;
+        vectorB[K] = (int *)malloc(filasB * columnaMatrizB * sizeof(int));
+        if (vectorB[K] == NULL) return 1;
         
         // Copia de los datos desde matrizA al bloque dinámico vector[J]
         // &matrizA[I_inicio][0] es la dirección del primer elemento de la submatriz.
-        memcpy(vector[J], 
-               &matrizB[I_inicioB][0], 
-               filaMatrizB * columnB * sizeof(int));
+        for (int i = 0; i < filasB; i++) {
+        memcpy(
+            &vectorB[K][i * columnaMatrizB],           // destino (fila i del bloque)
+            &matrizB[i][I_inicio_columna],            // origen (fila i, columna inicial)
+            columnaMatrizB * sizeof(int)              // cantidad de columnas a copiar
+        );
+}
 
         // Actualización del índice de inicio para la siguiente partición
-        I_inicioB += filaMatrizB;
+        I_inicio_columna += columnaMatrizB;
+    }
+    
+
+    for (int V =0; V<n2; V++){
+        for (int P=0; P<n2; P++){
+            for (int I = 0; I < filaMatrizA; I++){
+                for (int J = 0; J < columnaMatrizB; J++){
+                    matrizC[I + V*(filaMatrizA)][J + P*(columnaMatrizB)] = vectorA[V][I + columnA*J]*vectorB[P][I + columnA*J]; 
+                }
+            }
+        }
     }
 
+    // printf("%i",vectorA[bloque][fila + cantColumnas*columna]) * vectorA[bloque][fila + cantColumnas*columna]);
 
-    // int i, j, k_idx; 
-
-    // for (i = 0; i < M; i++) { 
-    //     for (j = 0; j < N; j++) { 
-    //         matrizC[i][j] = 0; 
-    //         for (k_idx = 0; k_idx < K; k_idx++) { // La dimensión interna es K=8
-    //             // C[i][j] = A[i][k] * B[k][j]
-    //             matrizC[i][j] += matrizA[i][k_idx] * matrizB[k_idx][j];
-    //         }
-    //     }
-    // }
-    
-    imprimirMatriz(8,8,vector[0]);
-    imprimirMatriz(8,8,vector[1]);
-    imprimirMatriz(8,8,vector[2]);
-    imprimirMatriz(8,8,vector[]);
+    imprimirMatriz(16,16,matrizC);
 
     // Liberación de memoria dinámica (es crucial)
     for (int J = 0; J < n2; J++) {
-        free(vector[J]);
+        free(vectorA[J]);
+        free(vectorB[J]);
     }
-    free(vector);
+    free(vectorA);
+    free(vectorB);
+
+    gettimeofday(&fin, NULL); // ⏱️ Termina medición
+    tiempo = (fin.tv_sec - inicio.tv_sec) + (fin.tv_usec - inicio.tv_usec) / 1e6;
+    printf("Tiempo real: %.6f segundos\n", tiempo);
     
     return 0;
 }
