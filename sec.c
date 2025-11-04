@@ -5,9 +5,9 @@
 #include <sys/time.h> 
 
 // 1. Definiciones de Dimensiones (constantes)
-#define M_FILAS_A 6144
-#define K_COMUN 6144
-#define N_COLUMNAS_B 6144
+#define M_FILAS_A 64
+#define K_COMUN 64
+#define N_COLUMNAS_B 64
 // Definici�n auxiliar para c�lculos de tama�o (SAFE_ARRAYSIZE)
 // La versi�n original puede ser insegura en contextos de funciones.
 #define SAFE_ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
@@ -80,7 +80,7 @@ int main() {
 	// Matriz B (8x16) con todos los elementos = 1
 	for (int i = 0; i < K; i++) {
 		for (int j = 0; j < N; j++) {
-			matrizB[i * N + j] = 5;
+			matrizB[i * N + j] = 1;
 		}
 	}
 	
@@ -133,20 +133,23 @@ int main() {
 	}
 	
 	
-	for (int V =0; V<n2; V++){
-		for (int P=0; P<n2; P++){
-			for (int I = 0; I < filaMatrizA; I++){
-				for (int J = 0; J < columnaMatrizB; J++){
-					matrizC[(I + V*(filaMatrizA)) * N + (J + P*(columnaMatrizB))] =
-						vectorA[V][I * columnA + J] * vectorB[P][I * columnA + J]; 
-				}
-			}
-		}
-	}
+	for (int V = 0; V < n2; V++) {
+    for (int P = 0; P < n2; P++) {
+        for (int I = 0; I < filaMatrizA; I++) {
+            for (int J = 0; J < columnaMatrizB; J++) {
+                int suma = 0;
+                for (int k = 0; k < columnA; k++) {
+                    suma += vectorA[V][I * columnA + k] * vectorB[P][k * columnaMatrizB + J];
+                }
+                matrizC[(I + V * filaMatrizA) * N + (J + P * columnaMatrizB)] = suma;
+            }
+        }
+    }
+}
 	
 	// printf("%i",vectorA[bloque][fila + cantColumnas*columna]) * vectorA[bloque][fila + cantColumnas*columna]);
 	
-	imprimirMatriz(16,16,matrizC);
+	imprimirMatriz(64,64,matrizC);
 	
 	// Liberaci�n de memoria din�mica (es crucial)
 	for (int J = 0; J < n2; J++) {
