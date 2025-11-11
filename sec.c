@@ -5,9 +5,9 @@
 #include <sys/time.h> 
 
 // 1. Definiciones de Dimensiones (constantes)
-#define M_FILAS_A 2048
-#define K_COMUN 2048
-#define N_COLUMNAS_B 2048
+#define M_FILAS_A 1024
+#define K_COMUN 512
+#define N_COLUMNAS_B 1024
 #define SAFE_ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 
 void imprimirMatriz(int rows, int cols, int *mat) {
@@ -23,7 +23,6 @@ void imprimirMatriz(int rows, int cols, int *mat) {
 int main() {
 	struct timeval inicio, fin;
 	double tiempo;
-	gettimeofday(&inicio, NULL);
 
 	int M = M_FILAS_A;
 	int K = K_COMUN;
@@ -68,6 +67,7 @@ int main() {
 		}
 	}
 	
+	gettimeofday(&inicio, NULL);
 	int filaMatrizA = filasA / n2;
 	int I_inicio = 0;
 	
@@ -106,7 +106,8 @@ int main() {
 			}
 		}
 	}
-	
+	gettimeofday(&fin, NULL);
+	tiempo = (fin.tv_sec - inicio.tv_sec) + (fin.tv_usec - inicio.tv_usec) / 1e6;
 	imprimirMatriz(64, 64, matrizC);
 	
 	for (J = 0; J < n2; J++) {
@@ -119,8 +120,7 @@ int main() {
 	free(matrizB);
 	free(matrizC);
 	
-	gettimeofday(&fin, NULL);
-	tiempo = (fin.tv_sec - inicio.tv_sec) + (fin.tv_usec - inicio.tv_usec) / 1e6;
+
 	printf("Tiempo real: %.6f segundos\n", tiempo);
 	
 	return 0;
